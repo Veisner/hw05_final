@@ -59,13 +59,26 @@ class ViewsFormsTests(TestCase):
         self.not_author_client.force_login(ViewsFormsTests.user_not_author)
 
     def test_create_post(self):
-        """при отправке валидной формы со страницы создания поста
-           создаётся новая запись в базе данных"""
+        """при отправке валидной формы с картинкой со страницы создания
+        поста создаётся новая запись в базе данных"""
         posts_count = Post.objects.count()
+        small_gif_2 = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded_2 = SimpleUploadedFile(
+            name='small2.gif',
+            content=small_gif_2,
+            content_type='image/gif'
+        )
         form_data = {
             'text': 'Самый новый пост',
             'group': self.group.pk,
-            'image': ViewsFormsTests.small_gif,
+            'image': uploaded_2,
             'author': self.post.author,
         }
         response = self.author_client.post(
@@ -76,28 +89,23 @@ class ViewsFormsTests(TestCase):
         self.assertRedirects(response, reverse('posts:profile', kwargs={
                              'username': self.user_author}), HTTPStatus.FOUND)
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        self.assertTrue(
-            Post.objects.filter(
-                author=self.post.author,
-                text=self.post.text,
-                group=self.group.pk,
-                image=self.post.image
-            ).exists()
-        )
-
-        #post = response2.context['page_obj'][0]
+        #картинка появляется на страницах
         response1 = self.author_client.get(reverse('posts:index'))
         self.assertEqual(
-            response1.context['page_obj'][1].image, self.post.image)
+            response1.context['page_obj'][0].image, f'posts/{uploaded_2.name}')
         response2 = self.author_client.get(reverse('posts:group_list',
                                            kwargs={'slug': 'test_slug'}))
         self.assertEqual(
-            response2.context.get('page_obj')[1].image, self.post.image)
+            response2.context.get('page_obj')[0].image, f'posts/{uploaded_2.name}')
         response3 = self.author_client.get(reverse('posts:profile',
                                            kwargs={
                                                'username': self.user_author}))
         self.assertEqual(
-            response3.context['page_obj'][1].image, self.post.image)
+            response3.context['page_obj'][0].image, f'posts/{uploaded_2.name}')
+        response4 = self.author_client.get(reverse('posts:post_detail',
+                                           kwargs={'post_id': 2}))
+        self.assertEqual(
+            response4.context['post'].image, f'posts/{uploaded_2.name}')
 
     def test_post_edit(self):
         """при отправке валидной формы со страницы редактирования поста

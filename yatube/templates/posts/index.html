@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}yaTube{% endblock %}
+{% block content %}
+    <div class="container py-5">
+        {% load cache %}
+          <h1>Последние обновления на сайте</h1>
+        {% cache 20 index_page %}
+        {% for post in page_obj %}
+          {% include 'posts/includes/post_list.html' %}
+            {% if post.group %}
+                <a class="card-link muted" href="{% url 'posts:group_list' post.group.slug %}">
+                все записи группы
+                <strong class="d-block text-gray-dark">{{ post.group.description }}</strong>
+                </a>
+            {% endif %}
+            {% if not forloop.last %}<hr>{% endif %}
+        {% endfor %}
+        {% endcache %}
+    </div>
+  {% include 'posts/includes/paginator.html' %}
+{% endblock %}

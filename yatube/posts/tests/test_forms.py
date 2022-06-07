@@ -126,7 +126,7 @@ class ViewsFormsTests(TestCase):
         response1 = self.guest_client.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
-        self.assertEqual((response1.context.get('post').pk), self.post.id)
+        self.assertEqual(response1.context.get('post').pk, self.post.id)
         self.assertEqual((response1.context.get('post').text
                           ), 'Тестовый текст')
 

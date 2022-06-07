@@ -60,10 +60,7 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    user = get_object_or_404(User, username=request.user.username) #???
     post = get_object_or_404(Post, pk=post_id)
-    user_followers = user.follower.filter(author=user)
-    user_follow = user.follower.filter(user=user).count()
     comments = Comment.objects.select_related("author").filter(post=post)
     author = post.author.get_full_name
     count = post.author.posts.count()
@@ -74,8 +71,6 @@ def post_detail(request, post_id):
         'count': count,
         'form': form,
         'comments': comments,
-        'user_followers': user_followers,
-        'user_follow': user_follow
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -119,6 +114,7 @@ def post_edit(request, post_id):
     context = {'post_id': post_id,
                'form': form,
                'is_edit': True,
+               'post': post,
                }
     return render(request, 'posts/post_create.html', context)
 

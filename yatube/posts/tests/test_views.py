@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post, User
+from ..models import Group, Post, User, Comment
 
 
 class ViewsURLTests(TestCase):
@@ -43,7 +43,9 @@ class ViewsURLTests(TestCase):
     def setUp(self):
         self.guest_client = Client()
         self.author_client = Client()
+        self.not_author_client = Client()
         self.author_client.force_login(ViewsURLTests.user_author)
+        self.not_author_client.force_login(ViewsURLTests.user_not_author)
 
     # Проверяем используемые шаблоны
     def test_pages_uses_correct_template(self):
@@ -214,3 +216,38 @@ class ViewsURLTests(TestCase):
         response4 = self.author_client.get(reverse('posts:group_list',
                                            kwargs={'slug': 'test_slug_2'}))
         self.assertNotIn(response4.context['page_obj'][0].text, self.post.text)
+
+    def test_check_comments(self):
+        """Авторизованный пользователь может оставить комментарий"""
+        post = Post.objects.create(text='Текст', group=self.group, author=self.user_author)
+        form_data = {
+                     'text': 'Comment',
+                     'post': post.id,
+                     'author': self.user_not_author
+                      }
+        self.not_author_client.post(reverse('posts:add_comment',
+                                           kwargs={'post_id': post.id}),
+                                           data=form_data,
+                                           follow=True
+                                           )
+
+        comment = post.comments.select_related('author').first()
+        self.assertEqual(Comment.objects.count(), 1)
+        self.assertEqual(comment.text, 'Comment')
+        self.assertEqual(comment.post, post)
+        self.assertEqual(comment.author, self.user_not_author)
+
+    def test_check_non_auth_comments(self):
+        """Не авторизованный пользователь не может оставить комментарий"""
+        post = Post.objects.create(text='Текст', group=self.group, author=self.user_author)
+        form_data = {
+                     'text': 'Comment',
+                     'post': post.id,
+                     'author': self.client
+                      }
+        self.client.post(reverse('posts:add_comment',
+                                           kwargs={'post_id': post.id}),
+                                           data=form_data,
+                                           follow=True
+                                           )
+        self.assertEqual(Comment.objects.count(), 0)

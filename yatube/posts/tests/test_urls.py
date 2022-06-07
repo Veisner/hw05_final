@@ -43,9 +43,10 @@ class ViewsURLTests(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_unexisting_page_url_exists_at_desired_location(self):
-        """Страница /unexisting_page/ вернет ошибку 404."""
+        """Страница /unexisting_page/ вернет кастомную ошибку 404."""
         response = self.guest_client.get('/unexisting_page/')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, 'core/404.html')
 
     # Проверяем доступность страниц для авторизованного пользователя
     def test_post_create_url_exists_at_desired_location(self):

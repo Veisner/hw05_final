@@ -1,10 +1,8 @@
 {% extends "base.html" %}
-{% block title %}yaTube{% endblock %}
+{% block title %}Follow{% endblock %}
 {% block content %}
     <div class="container py-5">
-        {% load cache %}
-          <h1>Последние обновления на сайте</h1>
-        {% cache 20 index_page %}
+          <h1>Посты любимых авторов</h1>
         {% include 'posts/includes/switcher.html' %}
         {% for post in page_obj %}
           {% include 'posts/includes/post_list.html' %}
@@ -16,7 +14,6 @@
             {% endif %}
             {% if not forloop.last %}<hr>{% endif %}
         {% endfor %}
-        {% endcache %}
     </div>
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}

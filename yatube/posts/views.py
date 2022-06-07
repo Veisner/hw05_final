@@ -3,17 +3,17 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from yatube.settings import POST_PAGE
 
 from .forms import PostForm, CommentForm
-from .models import Group, Post
+from .models import Follow, Group, Post, Comment
 
 
 def index(request):
     posts = Post.objects.all()
     count = posts.count()
-    template = 'posts/index.html'
     paginator = Paginator(posts, settings.POST_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -28,7 +28,6 @@ def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = Post.objects.filter(group=group)
     count = posts.count()
-    template = 'posts/group_list.html'
     text = 'Записи сообщества'
     paginator = Paginator(posts, POST_PAGE)
     page_number = request.GET.get('page')
@@ -39,28 +38,33 @@ def group_posts(request, slug):
         'text': text,
         'count': count,
     }
-    return render(request, template, context)
+    return render(request, 'posts/group_list.html', context)
 
 
 def profile(request, username):
-    template = 'posts/profile.html'
     author = get_object_or_404(User, username=username)
     posts = author.posts.all()
     count = posts.count()
     paginator = Paginator(posts, POST_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    following = Follow.objects.filter(user__username= request.user,
+                                      author=author)
     context = {
         'author': author,
         'page_obj': page_obj,
         'count': count,
+        'following': following
     }
-    return render(request, template, context)
+    return render(request, 'posts/profile.html', context)
 
 
 def post_detail(request, post_id):
+    user = get_object_or_404(User, username=request.user.username) #???
     post = get_object_or_404(Post, pk=post_id)
-    comments = post.comments.all()
+    user_followers = user.follower.filter(author=user)
+    user_follow = user.follower.filter(user=user).count()
+    comments = Comment.objects.select_related("author").filter(post=post)
     author = post.author.get_full_name
     count = post.author.posts.count()
     form = CommentForm(request.POST or None)
@@ -70,6 +74,8 @@ def post_detail(request, post_id):
         'count': count,
         'form': form,
         'comments': comments,
+        'user_followers': user_followers,
+        'user_follow': user_follow
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -98,7 +104,6 @@ def post_create(request):
                }
     return render(request, 'posts/post_create.html', context)
 
-
 @login_required
 def post_edit(request, post_id):
     post = Post.objects.get(pk=post_id)
@@ -116,3 +121,31 @@ def post_edit(request, post_id):
                'is_edit': True,
                }
     return render(request, 'posts/post_create.html', context)
+
+@login_required
+def follow_index(request):
+    posts = Post.objects.filter(author__following__user=request.user)
+    paginator = Paginator(posts, POST_PAGE)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {
+        "page_obj": page_obj,
+        "follow": True
+    }
+    return render(request, "posts/follow.html", context)
+
+
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    if author != request.user:
+        Follow.objects.get_or_create(user=request.user, author=author)
+    return redirect(reverse('posts:profile', kwargs={'username': username}))
+
+
+@login_required
+def profile_unfollow(request, username):
+    author = get_object_or_404(User, username=username)
+    follow = request.user.follower.filter(author=author)
+    follow.delete()
+    return redirect(reverse('posts:profile', kwargs={'username': username}))

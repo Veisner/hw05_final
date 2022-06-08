@@ -219,17 +219,18 @@ class ViewsURLTests(TestCase):
 
     def test_check_comments(self):
         """Авторизованный пользователь может оставить комментарий"""
-        post = Post.objects.create(text='Текст', group=self.group, author=self.user_author)
+        post = Post.objects.create(
+            text='Текст', group=self.group, author=self.user_author)
         form_data = {
-                     'text': 'Comment',
-                     'post': post.id,
-                     'author': self.user_not_author
-                      }
+            'text': 'Comment',
+            'post': post.id,
+            'author': self.user_not_author
+        }
         self.not_author_client.post(reverse('posts:add_comment',
-                                           kwargs={'post_id': post.id}),
-                                           data=form_data,
-                                           follow=True
-                                           )
+                                            kwargs={'post_id': post.id}),
+                                    data=form_data,
+                                    follow=True
+                                    )
 
         comment = post.comments.select_related('author').first()
         self.assertEqual(Comment.objects.count(), 1)
@@ -239,25 +240,26 @@ class ViewsURLTests(TestCase):
 
     def test_check_non_auth_comments(self):
         """Не авторизованный пользователь не может оставить комментарий"""
-        post = Post.objects.create(text='Текст', group=self.group, author=self.user_author)
+        post = Post.objects.create(
+            text='Текст', group=self.group, author=self.user_author)
         form_data = {
-                     'text': 'Comment',
-                     'post': post.id,
-                     'author': self.client
-                      }
+            'text': 'Comment',
+            'post': post.id,
+            'author': self.client
+        }
         self.client.post(reverse('posts:add_comment',
-                                           kwargs={'post_id': post.id}),
-                                           data=form_data,
-                                           follow=True
-                                           )
+                                 kwargs={'post_id': post.id}),
+                         data=form_data,
+                         follow=True
+                         )
         self.assertEqual(Comment.objects.count(), 0)
 
     def test_check_auth_follow(self):
         """Авторизованный пользователь может подписаться"""
         leo = User.objects.create_user(username='user_test')
         self.not_author_client.post(reverse('posts:profile_follow',
-                                 kwargs={"username": leo.username,})
-        )
+                                    kwargs={"username": leo.username, })
+                                    )
         self.assertEqual(Follow.objects.count(), 1)
 
         follow = Follow.objects.first()
@@ -268,10 +270,9 @@ class ViewsURLTests(TestCase):
         """Не авторизованный пользователь не может подписаться"""
         leo = User.objects.create_user(username='user_test')
         self.guest_client.post(reverse('posts:profile_follow',
-                                 kwargs={"username": leo.username,})
-        )
+                                       kwargs={"username": leo.username, })
+                               )
         self.assertEqual(Follow.objects.count(), 0)
-
 
     def test_check_unfollow(self):
         """"Отмена подписки работает корректно"""
@@ -279,18 +280,20 @@ class ViewsURLTests(TestCase):
         leo.following.create(user=self.user_not_author, author=leo)
         self.assertEqual(leo.following.count(), 1)
         self.not_author_client.post(reverse('posts:profile_unfollow',
-                                 kwargs={"username": leo.username,})
-        )
+                                    kwargs={"username": leo.username, })
+                                    )
         self.assertEqual(leo.following.count(), 0)
 
     def test_check_auth_follow(self):
-        """Пост появляется в постах избранных авторов у подписчика"""
+        """Пост появляется в постах избранных авторов у подписчика
+        и не появляется у не подписанного пользователя"""
         user_not_author_2 = User.objects.create_user(username='not_author_2')
         not_author_client_2 = Client()
         not_author_client_2.force_login(user_not_author_2)
         self.not_author_client.post(reverse('posts:profile_follow',
-                                 kwargs={"username": self.user_author.username,})
-        )
+                                    kwargs={"username":
+                                            self.user_author.username, })
+                                    )
         self.assertEqual(Follow.objects.count(), 1)
         form_data = {
             'text': 'Тест',

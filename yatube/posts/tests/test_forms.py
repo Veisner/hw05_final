@@ -13,6 +13,7 @@ from ..forms import PostForm
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class ViewsFormsTests(TestCase):
     @classmethod
@@ -89,14 +90,15 @@ class ViewsFormsTests(TestCase):
         self.assertRedirects(response, reverse('posts:profile', kwargs={
                              'username': self.user_author}), HTTPStatus.FOUND)
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        #картинка появляется на страницах
+        # картинка появляется на страницах
         response1 = self.author_client.get(reverse('posts:index'))
         self.assertEqual(
             response1.context['page_obj'][0].image, f'posts/{uploaded_2.name}')
         response2 = self.author_client.get(reverse('posts:group_list',
                                            kwargs={'slug': 'test_slug'}))
         self.assertEqual(
-            response2.context.get('page_obj')[0].image, f'posts/{uploaded_2.name}')
+            response2.context.get('page_obj'
+                                  )[0].image, f'posts/{uploaded_2.name}')
         response3 = self.author_client.get(reverse('posts:profile',
                                            kwargs={
                                                'username': self.user_author}))
@@ -183,5 +185,3 @@ class ViewsFormsTests(TestCase):
         )
         self.assertFalse(response.context.get('is_edit'))
         self.assertEqual(Post.objects.count(), posts_count)
-
-

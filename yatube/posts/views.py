@@ -48,7 +48,7 @@ def profile(request, username):
     paginator = Paginator(posts, POST_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    following = Follow.objects.filter(user__username= request.user,
+    following = Follow.objects.filter(user__username=request.user,
                                       author=author)
     context = {
         'author': author,
@@ -74,6 +74,7 @@ def post_detail(request, post_id):
     }
     return render(request, 'posts/post_detail.html', context)
 
+
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
@@ -84,6 +85,7 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
 
 @login_required
 def post_create(request):
@@ -98,6 +100,7 @@ def post_create(request):
                'is_edit': False,
                }
     return render(request, 'posts/post_create.html', context)
+
 
 @login_required
 def post_edit(request, post_id):
@@ -117,6 +120,7 @@ def post_edit(request, post_id):
                'post': post,
                }
     return render(request, 'posts/post_create.html', context)
+
 
 @login_required
 def follow_index(request):

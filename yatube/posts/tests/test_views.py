@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post, User, Comment
+from ..models import Group, Post, User, Comment, Follow
 
 
 class ViewsURLTests(TestCase):
@@ -251,3 +251,59 @@ class ViewsURLTests(TestCase):
                                            follow=True
                                            )
         self.assertEqual(Comment.objects.count(), 0)
+
+    def test_check_auth_follow(self):
+        """Авторизованный пользователь может подписаться"""
+        leo = User.objects.create_user(username='user_test')
+        self.not_author_client.post(reverse('posts:profile_follow',
+                                 kwargs={"username": leo.username,})
+        )
+        self.assertEqual(Follow.objects.count(), 1)
+
+        follow = Follow.objects.first()
+        self.assertEqual(follow.author, leo)
+        self.assertEqual(follow.user, self.user_not_author)
+
+    def test_check_not_auth_follow(self):
+        """Не авторизованный пользователь не может подписаться"""
+        leo = User.objects.create_user(username='user_test')
+        self.guest_client.post(reverse('posts:profile_follow',
+                                 kwargs={"username": leo.username,})
+        )
+        self.assertEqual(Follow.objects.count(), 0)
+
+
+    def test_check_unfollow(self):
+        """"Отмена подписки работает корректно"""
+        leo = User.objects.create_user(username='user_test')
+        leo.following.create(user=self.user_not_author, author=leo)
+        self.assertEqual(leo.following.count(), 1)
+        self.not_author_client.post(reverse('posts:profile_unfollow',
+                                 kwargs={"username": leo.username,})
+        )
+        self.assertEqual(leo.following.count(), 0)
+
+    def test_check_auth_follow(self):
+        """Пост появляется в постах избранных авторов у подписчика"""
+        user_not_author_2 = User.objects.create_user(username='not_author_2')
+        not_author_client_2 = Client()
+        not_author_client_2.force_login(user_not_author_2)
+        self.not_author_client.post(reverse('posts:profile_follow',
+                                 kwargs={"username": self.user_author.username,})
+        )
+        self.assertEqual(Follow.objects.count(), 1)
+        form_data = {
+            'text': 'Тест',
+            'group': self.group.pk,
+            'author': self.post.author,
+        }
+        self.author_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        response = self.not_author_client.get(reverse('posts:follow_index'))
+        self.assertEqual(response.context['page_obj'][0].text, 'Тест')
+
+        response2 = not_author_client_2.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response2.context['page_obj']), 0)

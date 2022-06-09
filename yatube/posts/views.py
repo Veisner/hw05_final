@@ -5,7 +5,6 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from yatube.settings import POST_PAGE
 
 from .forms import PostForm, CommentForm
 from .models import Follow, Group, Post, Comment
@@ -29,7 +28,7 @@ def group_posts(request, slug):
     posts = Post.objects.filter(group=group)
     count = posts.count()
     text = 'Записи сообщества'
-    paginator = Paginator(posts, POST_PAGE)
+    paginator = Paginator(posts, settings.POST_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
@@ -45,7 +44,7 @@ def profile(request, username):
     author = get_object_or_404(User, username=username)
     posts = author.posts.all()
     count = posts.count()
-    paginator = Paginator(posts, POST_PAGE)
+    paginator = Paginator(posts, settings.POST_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     following = Follow.objects.filter(user__username=request.user,
@@ -111,9 +110,8 @@ def post_edit(request, post_id):
                     files=request.FILES or None,
                     instance=post)
     if form.is_valid():
-        post.save()
+        form.save()
         return redirect('posts:post_detail', post_id=post_id)
-    form = PostForm(instance=post)
     context = {'post_id': post_id,
                'form': form,
                'is_edit': True,
@@ -125,7 +123,7 @@ def post_edit(request, post_id):
 @login_required
 def follow_index(request):
     posts = Post.objects.filter(author__following__user=request.user)
-    paginator = Paginator(posts, POST_PAGE)
+    paginator = Paginator(posts, settings.POST_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {

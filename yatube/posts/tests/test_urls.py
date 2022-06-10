@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from tempfile import template
 
 from django.test import Client, TestCase
 
@@ -38,7 +39,6 @@ class ViewsURLTests(TestCase):
             '/posts/1/edit/': 'posts/post_create.html',
             '/create/': 'posts/post_create.html',
         }
-        self.templates = self.guest_url_templates | self.auth_url_templates
 
     def test_urls(self):
         """Страницы доступны любому пользователю"""
@@ -63,7 +63,8 @@ class ViewsURLTests(TestCase):
 
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        for url, template in self.templates.items():
+        url_templates = self.guest_url_templates | self.auth_url_templates
+        for url, template in url_templates.items():
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertTemplateUsed(

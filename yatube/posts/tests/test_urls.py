@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from tempfile import template
 
 from django.test import Client, TestCase
 
@@ -46,21 +45,21 @@ class ViewsURLTests(TestCase):
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-    
+
     def test_urls(self):
         """Страницы доступны авторизованному пользователю"""
         for url in self.auth_url_templates:
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-    
+
     def test_urls(self):
         """Страницы create и post_edit перенаправят анонимного пользователя"""
         for url in self.auth_url_templates:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.FOUND)
-        
+
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         url_templates = self.guest_url_templates | self.auth_url_templates

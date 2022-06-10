@@ -29,8 +29,9 @@ class CommentAdmin(admin.ModelAdmin):
 
 
 class FollowAdmin(admin.ModelAdmin):
-    list_display = ('pk','user', 'author')
+    list_display = ('pk', 'user', 'author')
     empty_value_display = '-пусто-'
+
 
 admin.site.register(Post, PostAdmin)
 admin.site.register(Group, GroupAdmin)

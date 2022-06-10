@@ -38,7 +38,8 @@ class ViewsURLTests(TestCase):
             '/posts/1/edit/': 'posts/post_create.html',
             '/create/': 'posts/post_create.html',
         }
-        self.url_templates = (self.guest_url_templates|self.auth_url_templates)
+        self.url_templates = (self.guest_url_templates
+                              | self.auth_url_templates)
 
     def test_urls(self):
         """Страницы доступны любому пользователю"""

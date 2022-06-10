@@ -46,12 +46,7 @@ class ViewsURLTests(TestCase):
         self.not_author_client = Client()
         self.author_client.force_login(ViewsURLTests.user_author)
         self.not_author_client.force_login(ViewsURLTests.user_not_author)
-
-    # Проверяем используемые шаблоны
-    def test_pages_uses_correct_template(self):
-        """URL-адрес использует соответствующий шаблон."""
-        # Собираем в словарь пары "имя_html_шаблона: reverse(name)"
-        templates_page_names = {
+        self.templates_page_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}
                     ): 'posts/group_list.html',
@@ -64,7 +59,10 @@ class ViewsURLTests(TestCase):
                     ): 'posts/post_create.html',
             reverse('posts:post_create'): 'posts/post_create.html',
         }
-        for reverse_name, template in templates_page_names.items():
+
+    def test_pages_uses_correct_template(self):
+        """URL-адрес использует соответствующий шаблон."""
+        for reverse_name, template in self.templates_page_names.items():
             with self.subTest(template=template):
                 response = self.author_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)

@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from tempfile import template
 
 from django.test import Client, TestCase
 

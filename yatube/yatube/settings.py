@@ -14,6 +14,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '[::1]',
     'testserver',
+    'www.veisner.pythonanywhere.com',
+    'veisner.pythonanywhere.com',
 ]
 
 INSTALLED_APPS = [
